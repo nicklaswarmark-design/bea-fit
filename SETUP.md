@@ -12,7 +12,7 @@ finns i `supabase/setup.sql`. Ska appen någon gång flyttas till ett nytt Supab
 öppna **SQL Editor**, klistra in hela filen och klicka **Run**.
 
 Under **Authentication → URL Configuration** ska **Site URL** vara appens adress
-(t.ex. `https://bea-fit.vercel.app`) och samma adress med `/**` på slutet ska finnas under
+(`https://bea-fit-sandy.vercel.app`) och samma adress med `/**` på slutet ska finnas under
 **Redirect URLs**. Annars pekar bekräftelsemejlen fel.
 
 ## Webbsidan (Vercel)
