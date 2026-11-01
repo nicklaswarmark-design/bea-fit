@@ -36,6 +36,11 @@ function Onboarding() {
   const [days, setDays] = useState<Record<string, number>>({});
   const [minutes, setMinutes] = useState(60);
   const [avoid, setAvoid] = useState("");
+  const [level, setLevel] = useState("Medel");
+  const [goal, setGoal] = useState("");
+  const [strengthPerWeek, setStrengthPerWeek] = useState(3);
+  const [runsPerWeek, setRunsPerWeek] = useState(1);
+  const [runAbility, setRunAbility] = useState("3–5 km");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -44,6 +49,11 @@ function Onboarding() {
       if (profile.data.equipment.length) setEquipment(profile.data.equipment);
       setMinutes(profile.data.session_minutes);
       setAvoid(profile.data.avoid_movements);
+      setLevel(profile.data.level);
+      setGoal(profile.data.goal);
+      setStrengthPerWeek(profile.data.strength_per_week);
+      setRunsPerWeek(profile.data.runs_per_week);
+      setRunAbility(profile.data.run_ability);
     }
   }, [profile.data]);
   useEffect(() => {
@@ -80,6 +90,11 @@ function Onboarding() {
         .from("profiles")
         .update({
           name,
+          level,
+          goal,
+          strength_per_week: strengthPerWeek,
+          runs_per_week: runsPerWeek,
+          run_ability: runAbility,
           equipment,
           session_minutes: minutes,
           avoid_movements: avoid,
@@ -102,24 +117,43 @@ function Onboarding() {
 
   const steps = [
     <div key="0">
-      <h1 className="text-4xl font-extrabold">Hej {name}! 👋</h1>
+      <h1 className="text-4xl font-extrabold">Hej {name || "där"}! 👋</h1>
       <p className="mt-3 text-muted-foreground">
-        Vi har förberett din profil. Du kan ändra allt nu eller senare.
+        Berätta lite om dig så anpassar vi appen. Allt går att ändra senare under Profil.
       </p>
-      <dl className="mt-6 space-y-2 card-surface p-5 text-sm">
-        <Row k="Namn">
+      <div className="mt-6 space-y-6 card-surface p-5">
+        <Field label="Namn">
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="h-10 w-40 text-right"
+            autoComplete="given-name"
+            className="h-11"
           />
-        </Row>
-        <Row k="Nivå">{p.level}</Row>
-        <Row k="Mål">{p.goal}</Row>
-        <Row k="Styrkepass / vecka">{p.strength_per_week}</Row>
-        <Row k="Löppass / vecka">{p.runs_per_week}</Row>
-        <Row k="Löpvana">{p.run_ability}</Row>
-      </dl>
+        </Field>
+        <Field label="Träningsnivå">
+          <Chips options={LEVELS} value={level} onChange={setLevel} />
+        </Field>
+        <Field label="Huvudmål">
+          <Chips options={GOALS} value={goal} onChange={setGoal} />
+          <Input
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            placeholder="Eller skriv ditt eget mål"
+            className="mt-2 h-11"
+          />
+        </Field>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Styrkepass / vecka">
+            <Stepper value={strengthPerWeek} onChange={setStrengthPerWeek} />
+          </Field>
+          <Field label="Löppass / vecka">
+            <Stepper value={runsPerWeek} onChange={setRunsPerWeek} />
+          </Field>
+        </div>
+        <Field label="Löpvana">
+          <Chips options={RUN_ABILITIES} value={runAbility} onChange={setRunAbility} />
+        </Field>
+      </div>
     </div>,
     <div key="1">
       <h1 className="text-3xl font-extrabold">Vilken utrustning har du?</h1>
@@ -238,11 +272,76 @@ function Onboarding() {
   );
 }
 
-function Row({ k, children }: { k: string; children: React.ReactNode }) {
+const LEVELS = ["Nybörjare", "Medel", "Avancerad"];
+const GOALS = [
+  "Muskeltillväxt och kroppssammansättning",
+  "Bli starkare",
+  "Gå ner i vikt",
+  "Bättre kondition",
+  "Må bra och hålla igång",
+];
+const RUN_ABILITIES = ["Springer inte", "Under 3 km", "3–5 km", "5–10 km", "Över 10 km"];
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-1">
-      <dt className="text-muted-foreground">{k}</dt>
-      <dd className="text-right font-semibold">{children}</dd>
+    <div>
+      <p className="mb-2 text-sm font-semibold">{label}</p>
+      {children}
+    </div>
+  );
+}
+
+function Chips({
+  options,
+  value,
+  onChange,
+}: {
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((o) => (
+        <button
+          key={o}
+          type="button"
+          aria-pressed={value === o}
+          onClick={() => onChange(o)}
+          className={cn(
+            "min-h-11 rounded-full border px-4 text-sm font-semibold",
+            value === o ? "border-primary bg-primary text-primary-foreground" : "bg-card",
+          )}
+        >
+          {o}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Stepper({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex items-center justify-between rounded-2xl border bg-card p-1">
+      <button
+        type="button"
+        aria-label="Minska"
+        disabled={value <= 0}
+        onClick={() => onChange(Math.max(0, value - 1))}
+        className="h-10 w-10 rounded-xl text-xl font-bold disabled:opacity-30"
+      >
+        −
+      </button>
+      <span className="text-lg font-bold tabular-nums">{value}</span>
+      <button
+        type="button"
+        aria-label="Öka"
+        disabled={value >= 7}
+        onClick={() => onChange(Math.min(7, value + 1))}
+        className="h-10 w-10 rounded-xl text-xl font-bold disabled:opacity-30"
+      >
+        +
+      </button>
     </div>
   );
 }
